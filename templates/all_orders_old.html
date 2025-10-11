@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}All Orders
+{% endblock title %}
+
+{% block body %}
+
+<style>
+  .order-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+  
+  .payment-status {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  .payment-paid {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  
+  .payment-unpaid {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  
+  .payment-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
+  .special-instructions {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 5px;
+  }
+  
+  .btn-paid {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  .btn-paid:hover {
+    background: #059669;
+  }
+  
+  .btn-view-payment {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-view-payment:hover {
+    background: #2563eb;
+    color: white;
+  }
+</style>
+
+<div style="padding: 15px 50px 15px">
+
+  {% for table, orders in order_by_table.items %}
+
+  <div style="padding: 15px 5px 15px">
+    
+    {% if table == 'Take Away' %}
+    <h3>🚶 {{ table }}</h3>
+    {% else %}
+    <h3>🍽 Table No : {{table}}</h3>
+    {% endif %}
+    <hr>
+    <hr>
+
+    {% for o in orders %}
+    
+    <div class="order-card">
+      <h5><p>⏰ Order Time: {{ o.order_time }}</p></h5>
+      <p><strong>Order ID:</strong> #{{ o.order_id }}</p>
+      
+      <!-- Order Items -->
+      <div style="background: #f3f4f6; padding: 10px; border-radius: 5px; margin: 10px 0;">
+        {% for item_key, item_values in o.items_json.items %}
+        <b><p>{{ item_values.1 }} : {{ item_values.0 }}</p></b>
+        {% endfor %}
+        <b><p style="color: #10b981; font-size: 1.1rem;">Total : ₹{{o.price}}</p></b>
+      </div>
+      
+      <p><strong>Name:</strong> {{ o.name }}</p>
+      
+      <!-- NEW: Special Instructions -->
+      {% if o.special_instructions %}
+      <div class="special-instructions">
+        <strong>📝 Special Instructions:</strong>
+        <p style="margin: 5px 0 0 0;">{{ o.special_instructions }}</p>
+      </div>
+      {% endif %}
+      
+      <!-- NEW: Payment Status Section -->
+      <div style="margin: 15px 0; padding: 15px; background: #f9fafb; border-radius: 8px;">
+        <p style="margin-bottom: 10px;">
+          <strong>💳 Payment Status:</strong>
+          
+          {% if o.payment_status == 'paid' %}
+            <span class="payment-status payment-paid">✅ PAID</span>
+          {% elif o.payment_screenshot %}
+            <span class="payment-status payment-pending">⏳ Pending Verification</span>
+          {% else %}
+            <span class="payment-status payment-unpaid">❌ UNPAID</span>
+          {% endif %}
+        </p>
+        
+        <!-- Show payment screenshot and mark as paid button -->
+        {% if o.payment_status == 'unpaid' %}
+          {% if o.payment_screenshot %}
+            <div style="margin-top: 10px;">
+              <a href="{{ o.payment_screenshot.url }}" target="_blank" class="btn-view-payment">
+                📸 View Payment Screenshot
+              </a>
+              
+              <form method="POST" action="{% url 'mark_paid' o.order_id %}" style="display:inline; margin-left: 10px;">
+                {% csrf_token %}
+                <button type="submit" class="btn-paid">
+                  ✅ Mark as Paid
+                </button>
+              </form>
+            </div>
+          {% else %}
+            <p style="color: #dc2626; margin-top: 5px; font-size: 0.9rem;">
+              ⚠️ Customer has not uploaded payment proof yet
+            </p>
+          {% endif %}
+        {% endif %}
+      </div>
+      
+      <!-- Bill Generation -->
+      {% if not o.bill_clear %}
+      <button onclick="generateBill('{{table}}')" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 600;">
+        📄 Generate Bill
+      </button>
+      {% else %}
+      <b><h5 style="color: #10b981;">✅ Bill Cleared</h5></b>
+      {% endif %}
+    </div>
+    
+    <hr>
+    {% endfor %}
+
+    <hr>
+
+  {% endfor %}
+
+  </div>
+
+</div>
+{% endblock body %}
+
+{%block js%}
+
+<script>
+  function generateBill(table) {
+    window.location.href = '/generate_bill?table=' + table;
+  }
+</script>
+
+{%endblock js%}

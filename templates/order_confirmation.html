@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Confirmation{% endblock %}
+
+{% block body %}
+
+<style>
+.confirmation-container {
+  max-width: 800px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.success-message {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.success-message h2 {
+  color: #10b981;
+  margin-bottom: 15px;
+}
+
+.order-details {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.order-details h3 {
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 10px;
+}
+
+/* NEW: Payment Section Styles */
+.payment-section {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.payment-section h3 {
+  margin-bottom: 20px;
+  color: #dc2626;
+}
+
+.qr-code-container {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+}
+
+.qr-code-img {
+  max-width: 250px;
+  border: 3px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.payment-info {
+  background: #fef3c7;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.upload-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.rating-section {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.rating-section h3 {
+  margin-bottom: 20px;
+}
+
+.rating-item {
+  padding: 20px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.rating-item h5 {
+  margin-bottom: 15px;
+  color: #1f2937;
+}
+
+.star-rating-input {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+}
+
+.star-btn.selected {
+  filter: drop-shadow(0 0 5px #fbbf24);
+}
+
+.review-input {
+  width: 100%;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.submit-rating-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.submit-rating-btn:hover {
+  background: #059669;
+}
+
+.skip-rating-btn {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  margin-left: 10px;
+}
+
+.skip-rating-btn:hover {
+  background: #4b5563;
+}
+</style>
+
+<div class="confirmation-container">
+  <!-- Success Message -->
+  <div class="success-message">
+    <div class="success-icon">✅</div>
+    <h2>Order Placed Successfully!</h2>
+    <p>Order #{{ order.order_id }} - Total: ₹{{ order.price }}</p>
+    {% if order.table != 'take away' %}
+      <p>Table: {{ order.table }}</p>
+    {% else %}
+      <p>Take Away Order</p>
+    {% endif %}
+  </div>
+
+  <!-- Order Details -->
+  <div class="order-details">
+    <h3>Order Details</h3>
+    {% for item in order_items %}
+      <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+        <span>{{ item.menu_item.name }} × {{ item.quantity }}</span>
+        <span style="font-weight: 600; color: #10b981;">₹{{ item.subtotal }}</span>
+      </div>
+    {% endfor %}
+    
+    {% if order.special_instructions %}
+      <div style="margin-top: 15px; padding: 15px; background: #fef3c7; border-radius: 8px;">
+        <strong>📝 Special Instructions:</strong>
+        <p style="margin-top: 5px;">{{ order.special_instructions }}</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- NEW: Payment Section -->
+  <div class="payment-section">
+    <h3>💳 Complete Payment</h3>
+    <p>Scan the QR code below to pay ₹{{ order.price }}</p>
+    
+    <div class="qr-code-container">
+      <!-- REPLACE THIS PATH WITH YOUR ACTUAL QR CODE IMAGE -->
+      <img src="/static/payment_qr.jpg" alt="Payment QR Code" class="qr-code-img">
+    </div>
+    
+    <div class="payment-info">
+      <p><strong>⚠️ Important:</strong> After payment, upload screenshot below</p>
+      <p>Your order will be confirmed once admin verifies payment</p>
+    </div>
+    
+    <div class="upload-section">
+      <form method="POST" action="{% url 'upload_payment' order.order_id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="payment_screenshot" class="form-label"><strong>Upload Payment Screenshot:</strong></label>
+        <input type="file" name="payment_screenshot" id="payment_screenshot" class="form-control" accept="image/*" required>
+        <button type="submit" class="btn btn-danger btn-lg mt-3">
+          📤 Upload Payment Proof
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Rating Section -->
+  <div class="rating-section">
+    <h3>⭐ Rate Your Items (Optional)</h3>
+    <p style="color: #6b7280; margin-bottom: 20px;">
+      Help others by rating the items you ordered!
+    </p>
+    
+    <form method="POST" action="{% url 'submit_ratings' order.order_id %}" id="ratingForm">
+      {% csrf_token %}
+      
+      {% for item in order_items %}
+      <div class="rating-item">
+        <h5>{{ item.menu_item.name }}</h5>
+        
+        <div class="star-rating-input" data-item="{{ item.menu_item.id }}">
+          {% for i in "12345" %}
+            <button type="button" class="star-btn" data-rating="{{ forloop.counter }}" onclick="setRating(this, {{ item.menu_item.id }})">
+              ☆
+            </button>
+          {% endfor %}
+        </div>
+        
+        <input type="hidden" name="rating_{{ item.menu_item.id }}" id="rating-{{ item.menu_item.id }}">
+        
+        <textarea 
+          name="review_{{ item.menu_item.id }}" 
+          class="review-input" 
+          rows="2" 
+          placeholder="Write a review (optional)..."
+        ></textarea>
+      </div>
+      {% endfor %}
+      
+      <button type="submit" class="submit-rating-btn">Submit Ratings</button>
+      <a href="/" class="skip-rating-btn" onclick="clearCart()">Skip & Go to Menu</a>
+    </form>
+  </div>
+</div>
+
+<script>
+function setRating(button, itemId) {
+  const container = button.parentElement;
+  const rating = parseInt(button.getAttribute('data-rating'));
+  
+  document.getElementById(`rating-${itemId}`).value = rating;
+  
+  const stars = container.querySelectorAll('.star-btn');
+  stars.forEach((star, index) => {
+    if (index < rating) {
+      star.textContent = '⭐';
+      star.classList.add('selected');
+    } else {
+      star.textContent = '☆';
+      star.classList.remove('selected');
+    }
+  });
+}
+
+document.getElementById('ratingForm').addEventListener('submit', function() {
+  clearCart();
+});
+
+function clearCart() {
+  localStorage.removeItem('cart');
+  localStorage.removeItem('tableValue');
+}
+</script>
+
+{% endblock %}

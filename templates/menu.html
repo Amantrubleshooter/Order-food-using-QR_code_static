@@ -5,111 +5,453 @@
 
 {% block body %}
 
+<style>
+/* Category Filter Tabs */
+.category-filter {
+  background: white;
+  padding: 12px 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.category-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  margin: 0 5px;
+  border-radius: 20px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.category-btn:hover {
+  background: #e5e7eb;
+}
+
+.category-btn.active:hover {
+  background: #5568d3;
+}
+
+/* Grid Layout */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 15px 10px 100px;
+  background: #f8f9fa;
+}
+
+/* Menu Card */
+.menu-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.menu-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.card-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card-content {
+  padding: 10px;
+}
+
+.card-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #10b981;
+  margin-bottom: 4px;
+}
+
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.stars {
+  color: #fbbf24;
+  font-size: 0.85rem;
+}
+
+.rating-count {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.card-desc {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-add, .btn-buy {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-add:hover {
+  background: #2563eb;
+}
+
+.btn-buy {
+  background: #10b981;
+  color: white;
+}
+
+.btn-buy:hover {
+  background: #059669;
+}
+
+.quantity-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.quantity-box button {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 0.8rem;
+}
+
+.quantity-box span {
+  font-weight: 700;
+  font-size: 0.85rem;
+  min-width: 25px;
+  text-align: center;
+}
+
+/* Fixed Bottom Cart */
+.fixed-cart {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #10b981;
+  padding: 12px 15px;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+  z-index: 99;
+}
+
+.cart-btn {
+  width: 100%;
+  background: white;
+  color: #10b981;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Desktop View */
+@media (min-width: 768px) {
+  .menu-grid {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .card-image {
+    height: 150px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .menu-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+</style>
+
 {% for message in messages %}
-    <div class="alert alert-success alert-dismissable fade show" role="alert">
-        <strong>{{message}}</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+<div class="alert alert-success alert-dismissable fade show" role="alert" style="margin: 10px;">
+    <strong>{{message}}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
 {% endfor %}
 
-{% for category, menu_items in items_by_category.items %}
-  <h3 style="margin:40px 25px 5px">{{category}}:</h3>
-<div class="row justify-content-center">
-{%for i in menu_items%}
-<div class="card" style="width: 18rem; margin:20px 20px 10px; ">
-  <img src="{{i.pic.url}}" class="card-img-top"  style='padding:10px 0px 0px; max-height:250px;'>
-  <div class="card-body">
-    <h4 class="card-title" id="namepr{{i.id}}" >{{i.name}}</h4>
-    <h5 class="card-title">₹<span id="pricepr{{i.id}}" >{{i.price}}</span></h5>
-    <p class="card-text">{{i.desc}}</p>
-    {% if user.is_superuser %}
-    <form action="{% url 'delete_dish' i.id %}" method="post">
-    {% csrf_token %}
-    <button class="btn btn-danger" type="submit">Delete</button>
-    </form>
-    
-    {% else %}
-    <span id="divpr{{i.id}}" class="divpr" >
-    <button  id="pr{{i.id}}" class="btn btn-primary cart">Add to cart</button>
-    </span>
-    {%endif%}
-  </div>
+{% if table_number %}
+<div class="alert alert-info alert-dismissible fade show" role="alert" style="margin: 10px;">
+    <strong>🍽 Table {{ table_number }}</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
-{%endfor%}
+{% elif not table_number %}
+<div class="alert alert-warning alert-dismissible fade show" role="alert" style="margin: 10px;">
+    <strong>🚶 Take Away Order</strong>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
-{%endfor%}
+{% endif %}
 
-<div class="d-md-flex mx-auto justify-content-md-center" 
-  style="
-  padding:25px 0px 50px;">
-  <a href='/cart' ><button type="submit" class="btn btn-outline-success">Go To Cart</button> </a>
+<!-- Category Filter -->
+<div class="category-filter">
+  <span class="category-btn active" data-category="all">All</span>
+  {% for category, menu_items in items_by_category.items %}
+  <span class="category-btn" data-category="{{category}}">{{category|title}}</span>
+  {% endfor %}
 </div>
 
+<!-- Menu Grid -->
+<div class="menu-grid" id="menuGrid">
+  {% for category, menu_items in items_by_category.items %}
+    {%for i in menu_items%}
+    <div class="menu-card" data-category="{{category}}">
+      <img src="{{i.pic.url}}" class="card-image" alt="{{i.name}}">
+      <div class="card-content">
+        <h4 class="card-name" id="namepr{{i.id}}">{{i.name}}</h4>
+        <div class="card-price">₹<span id="pricepr{{i.id}}">{{i.price}}</span></div>
+        
+        <!-- Star Rating -->
+        <div class="star-rating">
+          <span class="stars">⭐⭐⭐⭐⭐</span>
+          <span class="rating-count">(0)</span>
+        </div>
+        
+        <p class="card-desc">{{i.desc}}</p>
+        
+        {% if user.is_superuser %}
+        <form action="{% url 'delete_dish' i.id %}" method="post">
+          {% csrf_token %}
+          <button class="btn btn-danger btn-sm" type="submit" style="width:100%; font-size:0.75rem;">Delete</button>
+        </form>
+        {% else %}
+        <div id="divpr{{i.id}}" class="divpr">
+          <div class="card-actions">
+            <button id="pr{{i.id}}" class="btn-add cart">Add to Cart</button>
+            <button class="btn-buy" onclick="buyNow('pr{{i.id}}')">Buy Now</button>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {%endfor%}
+  {% endfor %}
+</div>
+
+<!-- Fixed Bottom Cart -->
+<div class="fixed-cart">
+  <a href='/cart'>
+    <button class="cart-btn">
+      🛒 View Cart (<span id="bottom-cart-count">0</span> items)
+    </button>
+  </a>
+</div>
+
+{% if user.is_superuser %}
+<div style="padding: 15px; background: white; margin-top: 10px;">
+  <a href="{% url 'generate_qr' %}" class="btn btn-info btn-sm">QR</a>
+  <a href="{% url 'admin_orders' %}" class="btn btn-warning btn-sm">Orders</a>
+  <a href="{% url 'table_management' %}" class="btn btn-secondary btn-sm">Tables</a>
+</div>
+{% endif %}
 
 {% endblock body %}
 
-
 {%block js%}
-
 <script>
-
   var cart = JSON.parse(localStorage.getItem('cart')) || {};
-  updatecart(cart);
+  updateCartButtons();
 
+  var url = window.location.href;
+  var params = new URLSearchParams(new URL(url).search);
+  var tableValue = params.get('table');
   
+  if (tableValue) {
+    localStorage.setItem('tableValue', tableValue);
+  } else {
+    tableValue = localStorage.getItem('tableValue');
+  }
+
+  // Category Filter
+  document.querySelectorAll('.category-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      
+      const category = this.getAttribute('data-category');
+      const cards = document.querySelectorAll('.menu-card');
+      
+      cards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Add to Cart
   $('.divpr').on('click', 'button.cart', function() {
-    var itemId = $(this).attr('id');
-    // console.log(itemId);
+    var itemId = this.id;
     
     if (cart[itemId]) {
-      cart[itemId]++;
-      qty = cart[itemId][0] + 1;
-      // name = "My Item";
       cart[itemId][0] = cart[itemId][0] + 1;
     } else {
-      qty = 1;
-      name = document.getElementById('name'+itemId).innerHTML;
-      price = document.getElementById('price'+itemId).innerHTML;
-      cart[itemId] = [qty,name,parseInt(price)];
+      var name = document.getElementById('name' + itemId).innerHTML;
+      var price = document.getElementById('price' + itemId).innerHTML;
+      cart[itemId] = [1, name, parseInt(price)];
     }
-    updatecart(cart);
     
-    // localStorage.setItem('cart', JSON.stringify(cart));
-    // console.log(cart);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartButtons();
+    updateNavbarCart();
   });
-  
-  updatecart(cart);
 
-  function updatecart(cart) {
-    var total = 0;
-    for (var item in cart){
-      total = total + cart[item][0]
-      document.getElementById('div'+item).innerHTML = "<button id='minus"+item+ "'class=' btn btn-primary minus'>-</button> <span id='val"+item+"''>"+cart[item][0]+"</span> <button id='plus"+item+"'class='btn btn-primary plus' > + </button>";
+  // Buy Now
+  function buyNow(itemId) {
+    var btn = document.getElementById(itemId);
+    if (btn) {
+      btn.click();
+      setTimeout(() => {
+        window.location.href = '/cart';
+      }, 300);
     }
-  localStorage.setItem('cart', JSON.stringify(cart));
-  document.getElementById('cart').innerHTML= total;
+  }
+
+  function updateCartButtons() {
+    for (var item in cart) {
+      var itemId = item.replace('pr', '');
+      document.getElementById('divpr' + itemId).innerHTML = 
+        '<div class="quantity-box">' +
+        '<button id="minus' + item + '" class="btn btn-primary minus">-</button>' +
+        '<span id="val' + item + '">' + cart[item][0] + '</span>' +
+        '<button id="plus' + item + '" class="btn btn-primary plus">+</button>' +
+        '</div>';
+    }
+  }
+
+  function updateNavbarCart() {
+    var total = 0;
+    for (var item in cart) {
+      total += cart[item][0];
+    }
+    document.getElementById('cart').innerHTML = total;
+    
+    // Update bottom cart button
+    var bottomCart = document.getElementById('bottom-cart-count');
+    if (bottomCart) {
+      bottomCart.innerHTML = total;
+    }
   }
 
   $('.divpr').on('click', 'button.minus', function(){
-    a=this.id.slice(5,);
-    cart[a][0]= cart[a][0] -1;
-    cart[a][0] = Math.max(0,cart[a][0])
-    document.getElementById('val'+a).InnerHTML= cart[a][0];
-    updatecart(cart);
-  } )
+    var itemId = this.id.slice(5);
+    if (cart[itemId]) {
+      cart[itemId][0] = cart[itemId][0] - 1;
+      if (cart[itemId][0] <= 0) {
+        delete cart[itemId];
+        var originalItemId = itemId.replace('pr', '');
+        document.getElementById('divpr' + originalItemId).innerHTML = 
+          '<div class="card-actions">' +
+          '<button id="' + itemId + '" class="btn-add cart">Add to Cart</button>' +
+          '<button class="btn-buy" onclick="buyNow(\'' + itemId + '\')">Buy Now</button>' +
+          '</div>';
+      } else {
+        document.getElementById('val' + itemId).innerHTML = cart[itemId][0];
+      }
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateNavbarCart();
+    }
+  });
 
   $('.divpr').on('click', 'button.plus', function(){
-    a=this.id.slice(4,);
-    cart[a][0]= cart[a][0] +1;
-    document.getElementById('val'+a).InnerHTML= cart[a][0];
-    updatecart(cart);
-  } )
+    var itemId = this.id.slice(4);
+    if (cart[itemId]) {
+      cart[itemId][0] = cart[itemId][0] + 1;
+      document.getElementById('val' + itemId).innerHTML = cart[itemId][0];
+      localStorage.setItem('cart', JSON.stringify(cart));
+      updateNavbarCart();
+    }
+  });
 
-  var url = window.location.href;
-        var params = new URLSearchParams(new URL(url).search);
-        var tableValue = params.get('table');
-        localStorage.setItem('tableValue', tableValue);
+  function clearCartAfterOrder() {
+    localStorage.removeItem('cart');
+    cart = {};
+    var buttons = document.querySelectorAll('.divpr');
+    buttons.forEach(function(div) {
+      var itemId = div.id.replace('divpr', '');
+      div.innerHTML = '<div class="card-actions">' +
+        '<button id="pr' + itemId + '" class="btn-add cart">Add to Cart</button>' +
+        '<button class="btn-buy" onclick="buyNow(\'pr' + itemId + '\')">Buy Now</button>' +
+        '</div>';
+    });
+    updateNavbarCart();
+  }
 
+  {% if messages %}
+    {% for message in messages %}
+      {% if 'Order Placed' in message.message %}
+        document.addEventListener('DOMContentLoaded', function() {
+          clearCartAfterOrder();
+        });
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 </script>
-
 {%endblock js%}

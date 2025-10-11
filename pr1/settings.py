@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 import os
 from pathlib import Path
+# Timezone settings
+USE_TZ = True
+TIME_ZONE = 'Asia/Kolkata'  # Indian Standard Time
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,8 +29,7 @@ DEBUG = True
 USE_TZ = False
 
 ALLOWED_HOSTS = [
-    'e0398dde-191c-43d5-8dfc-bc9e465afc40.id.repl.co',
-    'pr1.dhootkaushik.repl.co'
+"*"
 ]
 
 # Application definition
@@ -41,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'cafe',
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
@@ -51,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'pr1.urls'
@@ -77,9 +81,14 @@ WSGI_APPLICATION = 'pr1.wsgi.application'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
+    
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'Aman',       # Database name you created
+        'USER': 'postgres',              # Your DB username
+        'PASSWORD': '123',      # Your DB password
+        'HOST': 'localhost',           # Or your server IP
+        'PORT': '5432',                # Default PostgreSQL port
     }
 }
 
@@ -133,3 +142,9 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+
+CRONJOBS = [
+    ('0 */48 * * *', 'django.core.management.call_command', ['cleanup_old_data']),
+]
+
+
