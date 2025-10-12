@@ -34,5 +34,5 @@ urlpatterns = [
     path('mark_paid/<int:order_id>/', views.mark_payment_paid, name='mark_paid'),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
