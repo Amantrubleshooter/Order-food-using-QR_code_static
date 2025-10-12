@@ -55,7 +55,7 @@ def menu(request):
 from datetime import date, datetime, timedelta
 
 def all_orders(request):
-    """Owner view - all orders sorted by ID"""
+    """Owner view - all orders sorted by ID with daily numbering"""
     from datetime import timedelta
     from django.utils import timezone
     
@@ -66,43 +66,52 @@ def all_orders(request):
     today = timezone.now().date()
     yesterday = today - timedelta(days=1)
     
-    # Get orders sorted by ID (newest first)
-    today_orders = order.objects.filter(
+    # Get orders sorted by order_time (oldest to newest for correct numbering)
+    today_orders_raw = order.objects.filter(
         order_time__date=today
-    ).order_by('-order_id')
+    ).order_by('order_time')
     
-    yesterday_orders = order.objects.filter(
+    yesterday_orders_raw = order.objects.filter(
         order_time__date=yesterday
-    ).order_by('-order_id')
+    ).order_by('order_time')
     
-    # Add IST time and parse JSON
-    for ord in today_orders:
-        ord.ist_time = ord.order_time + timedelta(hours=5, minutes=30)
+    # Add daily order number to each order
+    today_orders = list(today_orders_raw)
+    for idx, o in enumerate(today_orders, start=1):
+        o.daily_order_number = idx
+        o.ist_time = o.order_time + timedelta(hours=5, minutes=30)
         try:
-            ord.items_json = json.loads(ord.items_json)
+            o.items_json = json.loads(o.items_json)
         except:
-            ord.items_json = {}
+            o.items_json = {}
     
-    for ord in yesterday_orders:
-        ord.ist_time = ord.order_time + timedelta(hours=5, minutes=30)
+    yesterday_orders = list(yesterday_orders_raw)
+    for idx, o in enumerate(yesterday_orders, start=1):
+        o.daily_order_number = idx
+        o.ist_time = o.order_time + timedelta(hours=5, minutes=30)
         try:
-            ord.items_json = json.loads(ord.items_json)
+            o.items_json = json.loads(o.items_json)
         except:
-            ord.items_json = {}
+            o.items_json = {}
+    
+    # Reverse for display (newest first)
+    today_orders.reverse()
+    yesterday_orders.reverse()
     
     # Calculate earnings
-    today_earnings = sum(int(o.price) if o.price and o.price.isdigit() else 0 for o in today_orders)
-    yesterday_earnings = sum(int(o.price) if o.price and o.price.isdigit() else 0 for o in yesterday_orders)
+    today_earnings = sum(float(o.price) if o.price else 0 for o in today_orders)
+    yesterday_earnings = sum(float(o.price) if o.price else 0 for o in yesterday_orders)
     
     context = {
         'today_orders': today_orders,
-        'yesterday_orders': yesterday_orders,
-        'today_date': today,
-        'yesterday_date': yesterday,
+        'today_count': len(today_orders),
         'today_earnings': today_earnings,
+        'today_date': today,
+        
+        'yesterday_orders': yesterday_orders,
+        'yesterday_count': len(yesterday_orders),
         'yesterday_earnings': yesterday_earnings,
-        'today_count': today_orders.count(),
-        'yesterday_count': yesterday_orders.count(),
+        'yesterday_date': yesterday,
     }
     
     return render(request, 'all_orders.html', context)
@@ -516,15 +525,29 @@ def table_list(request):
     return render(request, 'table_list.html', {'tables': tables})
 
 def admin_orders(request):
-    """Kitchen view - all orders sorted by ID"""
+    """Kitchen view - all orders sorted by ID with daily numbering"""
     from datetime import timedelta
+    from django.utils import timezone
     
-    # Get all active orders sorted by order ID (newest first)
-    active_orders = order.objects.filter(
-        status__in=['pending', 'preparing', 'ready']
-    ).order_by('-order_id')  # Newest first: #44, #43, #42...
+    today = timezone.now().date()
     
-    # Add IST time
+    # Get all orders for today (including completed for proper numbering)
+    all_today_orders = order.objects.filter(
+        order_time__date=today
+    ).order_by('order_time')
+    
+    # Add daily order number to ALL orders (for correct numbering)
+    all_orders_list = list(all_today_orders)
+    for idx, o in enumerate(all_orders_list, start=1):
+        o.daily_order_number = idx
+    
+    # Filter for active orders only (pending, preparing, ready)
+    active_orders = [o for o in all_orders_list if o.status in ['pending', 'preparing', 'ready']]
+    
+    # Reverse for display (newest first)
+    active_orders.reverse()
+    
+    # Add IST time and parse items
     for order_obj in active_orders:
         order_obj.ist_time = order_obj.order_time + timedelta(hours=5, minutes=30)
         try:

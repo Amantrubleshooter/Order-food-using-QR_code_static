@@ -164,7 +164,7 @@
       {% for o in today_orders %}
       <div class="order-card-compact">
         <div class="order-header">
-          <span class="order-id">#{{ o.order_id }}</span>
+          <span class="order-id">#{{ o.daily_order_number }}</span>
           <span class="order-time">{{ o.ist_time|date:"g:i A" }}</span>
         </div>
         
@@ -255,7 +255,7 @@
       {% for o in yesterday_orders %}
       <div class="order-card-compact" style="opacity: 0.8;">
         <div class="order-header">
-          <span class="order-id">#{{ o.order_id }}</span>
+          <span class="order-id">#{{ o.daily_order_number }}</span>
           <span class="order-time">{{ o.ist_time|date:"g:i A" }}</span>
         </div>
         

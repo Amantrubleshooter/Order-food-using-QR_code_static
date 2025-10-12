@@ -147,7 +147,7 @@
             {% for order in orders %}
             <div class="order-card-compact">
                 <div class="order-header">
-                    <span class="order-id">#{{ order.order_id }}</span>
+                    <span class="order-id">#{{ order.daily_order_number }}</span>
                     <span class="order-time">{{ order.ist_time|date:"g:i A" }}</span>
                 </div>
                 
