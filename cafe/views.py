@@ -56,45 +56,60 @@ from datetime import date, datetime, timedelta
 
 def all_orders(request):
     """Owner view - all orders sorted by ID with daily numbering"""
-    from datetime import timedelta
+    from datetime import timedelta, datetime
     from django.utils import timezone
+    import pytz
     
     if not request.user.is_superuser:
         messages.error(request, 'Only admin users can access this page!')
         return redirect('menu')
     
-    today = timezone.now().date()
+    # Get current IST time
+    ist = pytz.timezone('Asia/Kolkata')
+    now_ist = timezone.now().astimezone(ist)
+    today = now_ist.date()
     yesterday = today - timedelta(days=1)
     
-    # Get orders sorted by order_time (oldest to newest for correct numbering)
+    # Create IST date boundaries
+    today_start = ist.localize(datetime.combine(today, datetime.min.time()))
+    today_end = ist.localize(datetime.combine(today, datetime.max.time()))
+    
+    yesterday_start = ist.localize(datetime.combine(yesterday, datetime.min.time()))
+    yesterday_end = ist.localize(datetime.combine(yesterday, datetime.max.time()))
+    
+    # Get orders for today (comparing with IST boundaries)
     today_orders_raw = order.objects.filter(
-        order_time__date=today
+        order_time__gte=today_start,
+        order_time__lte=today_end
     ).order_by('order_time')
     
     yesterday_orders_raw = order.objects.filter(
-        order_time__date=yesterday
+        order_time__gte=yesterday_start,
+        order_time__lte=yesterday_end
     ).order_by('order_time')
     
-    # Add daily order number to each order
+    # Process today's orders
     today_orders = list(today_orders_raw)
     for idx, o in enumerate(today_orders, start=1):
         o.daily_order_number = idx
-        o.ist_time = o.order_time + timedelta(hours=5, minutes=30)
+        # Convert to IST (not adding 5:30, just converting timezone)
+        o.ist_time = o.order_time.astimezone(ist)
         try:
             o.items_json = json.loads(o.items_json)
         except:
             o.items_json = {}
     
+    # Process yesterday's orders
     yesterday_orders = list(yesterday_orders_raw)
     for idx, o in enumerate(yesterday_orders, start=1):
         o.daily_order_number = idx
-        o.ist_time = o.order_time + timedelta(hours=5, minutes=30)
+        o.ist_time = o.order_time.astimezone(ist)
         try:
             o.items_json = json.loads(o.items_json)
         except:
             o.items_json = {}
     
-    # Reverse for display (newest first)
+    # Reverse for display
     today_orders.reverse()
     yesterday_orders.reverse()
     
@@ -526,30 +541,37 @@ def table_list(request):
 
 def admin_orders(request):
     """Kitchen view - all orders sorted by ID with daily numbering"""
-    from datetime import timedelta
+    from datetime import timedelta, datetime
     from django.utils import timezone
+    import pytz
     
-    today = timezone.now().date()
+    # Get current IST time
+    ist = pytz.timezone('Asia/Kolkata')
+    now_ist = timezone.now().astimezone(ist)
+    today = now_ist.date()
     
-    # Get all orders for today (including completed for proper numbering)
+    # IST date boundaries
+    today_start = ist.localize(datetime.combine(today, datetime.min.time()))
+    today_end = ist.localize(datetime.combine(today, datetime.max.time()))
+    
+    # Get all orders for today
     all_today_orders = order.objects.filter(
-        order_time__date=today
+        order_time__gte=today_start,
+        order_time__lte=today_end
     ).order_by('order_time')
     
-    # Add daily order number to ALL orders (for correct numbering)
+    # Add daily order number
     all_orders_list = list(all_today_orders)
     for idx, o in enumerate(all_orders_list, start=1):
         o.daily_order_number = idx
     
-    # Filter for active orders only (pending, preparing, ready)
+    # Filter for active orders
     active_orders = [o for o in all_orders_list if o.status in ['pending', 'preparing', 'ready']]
-    
-    # Reverse for display (newest first)
     active_orders.reverse()
     
-    # Add IST time and parse items
+    # Add IST time
     for order_obj in active_orders:
-        order_obj.ist_time = order_obj.order_time + timedelta(hours=5, minutes=30)
+        order_obj.ist_time = order_obj.order_time.astimezone(ist)
         try:
             order_obj.items_dict = json.loads(order_obj.items_json)
         except:
