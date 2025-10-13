@@ -22,7 +22,7 @@ class menu_item(models.Model):
     name = models.CharField(max_length=50)
     category = models.CharField(max_length=50, default='')
     desc = models.CharField(max_length=250)
-    pic = models.ImageField(upload_to='fimage')
+    pic = models.CharField(max_length=200, default='menu_items/default.jpg')
     price = models.CharField(max_length=4, default='0')
     list_order = models.IntegerField(default=0)
 

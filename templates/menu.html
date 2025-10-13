@@ -1,5 +1,6 @@
-{% extends 'base.html' %}
 
+{% extends 'base.html' %}
+{% load static %}
 {% block title %}Menu
 {% endblock title %}
 
@@ -261,7 +262,7 @@
   {% for category, menu_items in items_by_category.items %}
     {%for i in menu_items%}
     <div class="menu-card" data-category="{{category}}">
-      <img src="{{i.pic.url}}" class="card-image" alt="{{i.name}}">
+      <img src="{% static i.pic %}" class="card-image" alt="{{i.name}}">
       <div class="card-content">
         <h4 class="card-name" id="namepr{{i.id}}">{{i.name}}</h4>
         <div class="card-price">₹<span id="pricepr{{i.id}}">{{i.price}}</span></div>

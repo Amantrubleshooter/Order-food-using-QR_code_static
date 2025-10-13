@@ -1,4 +1,6 @@
+
 {% extends 'base.html' %}
+{% load static %}
 
 {%block title%} Manage Menu {%endblock title%}
 
@@ -49,13 +51,20 @@
         <label for="floatingInput">Description</label>
       </div>
 
-      <div class="form-floating mb-3 col-md-8">
-        <input type="file"  name='img' id="form3Example3c" accept="image/*" placeholder='Choose File' class="form-control"  />
-        <label class="form-label" for="form3Example3c">Upload image</label>
+      <div class="mb-3 col-md-8">
+        <label for="categorySelect" class="form-label">Image of dish</label>
+          <select class="form-select" name="selected_img" id="categorySelect" required>
+            <option value="">Select</option>
+            {% for category, img_name in category_images.items %}
+            <option value="{{ img_name }}">{{ category|title }}</option>
+            {% endfor %}
+          </select>
       </div>
 
-      <button type='submit' class='btn btn-primary col-md-6'>Submit</button>
-    
+      </div>
+      <div class="text-center mt-4">
+      ` <button type='submit' class='btn btn-primary col-md-6'>Submit</button>
+      </div>
     </form>
 
 </div>
@@ -64,7 +73,7 @@
 <div class="row justify-content-center">
 {%for i in items%}
 <div class="card" style="width: 18rem; margin:20px 20px 10px; ">
-  <img src="{{i.pic.url}}" class="card-img-top" alt="..." style='padding:10px 0px 0px' >
+  <img src="{% static i.pic %}" class="card-img-top" alt="..." style='padding:10px 0px 0px' >
   <div class="card-body">
     <!-- <h4 class="card-title">{{i.id}}</h4> -->
     <h4 class="card-title">{{i.name}}</h4>

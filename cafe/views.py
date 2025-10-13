@@ -162,9 +162,66 @@ def profile(request):
     return render(request, 'profile.html')
 
 
+# def manage_menu(request):
+#     if request.method == 'POST' and request.FILES['img']:
+#         if (request.user.is_anonymous):
+#             messages.error(request, 'Please Login to continue!')
+#             return redirect('login')
+#         if not ((request.user.is_superuser) or (request.user.cafe_manager)):
+#             messages.error(request, 'Only Staff members are allowed!')
+#             return redirect('menu')
+#         else:
+#             name = request.POST.get('name')
+#             price = request.POST.get('price')
+#             desc = request.POST.get('desc')
+#             cat = request.POST.get('cat')
+#             img = request.FILES['img']
+#             listing_order = 0
+#             if cat.lower() == 'pizza':
+#                 listing_order = 1
+#             elif cat.lower() == 'momos':
+#                 listing_order = 2
+#             elif cat.lower() == 'sandwich':
+#                 listing_order = 3
+#             elif cat.lower() == 'manchurian':
+#                 listing_order = 4
+#             elif cat.lower() == 'french fries':
+#                 listing_order = 5
+#             elif cat.lower() == 'noodles':
+#                 listing_order = 6
+#             elif cat.lower() == 'combo':
+#                 listing_order = 7
+#             elif cat.lower() == 'beverage':
+#                 listing_order = 8
+
+
+#             dish = menu_item(name=name,
+#                              price=price,
+#                              desc=desc,
+#                              category=cat.lower(),
+#                              pic=img,
+#                              list_order=listing_order)
+#             dish.save()
+#             messages.success(request, 'Dish added successfully!')
+#             return redirect('menu')
+
+#     return render(request, 'manage_menu.html')
+
 def manage_menu(request):
-    if request.method == 'POST' and request.FILES['img']:
-        if (request.user.is_anonymous):
+              # Dictionary mapping categories to static images
+    category_images = {
+        'pizza': 'menu_images/pizza.jpg',
+        'momos': 'menu_images/momos.jpg',
+        'sandwich': 'menu_images/sandwich.jpg',
+        'manchurian': 'menu_images/manchurian.jpg',
+        'french fries': 'menu_images/french-fries.jpg',
+        'noodles': 'menu_images/noodles.jpg',
+        'combo': 'menu_images/combo.jpg',
+        'beverage': 'menu_images/beverage.jpg',
+    }
+    
+    if request.method == 'POST':
+        if request.user.is_anonymous:
             messages.error(request, 'Please Login to continue!')
             return redirect('login')
         if not ((request.user.is_superuser) or (request.user.cafe_manager)):
@@ -175,7 +232,7 @@ def manage_menu(request):
             price = request.POST.get('price')
             desc = request.POST.get('desc')
             cat = request.POST.get('cat')
-            img = request.FILES['img']
+            selected_img = request.POST.get('selected_img')  # Get selected image
             listing_order = 0
             if cat.lower() == 'pizza':
                 listing_order = 1
@@ -193,21 +250,21 @@ def manage_menu(request):
                 listing_order = 7
             elif cat.lower() == 'beverage':
                 listing_order = 8
-
-
-            dish = menu_item(name=name,
-                             price=price,
-                             desc=desc,
-                             category=cat.lower(),
-                             pic=img,
-                             list_order=listing_order)
+            # Use selected image or default to category image
+            img_path = selected_img if selected_img else category_images.get(cat, 'menu_images/default.jpg')
+            dish = menu_item(
+                name=name,
+                price=price,
+                desc=desc,
+                category=cat.lower(),
+                pic=img_path,  # Save the static image path
+                list_order=listing_order
+            )
             dish.save()
             messages.success(request, 'Dish added successfully!')
-            return redirect('menu')
-
-    return render(request, 'manage_menu.html')
-
-
+            return redirect('menu')  
+        # Pass category_images to template
+    return render(request, 'manage_menu.html', {'category_images': category_images})
 def delete_dish(request, item_id):
     dish = get_object_or_404(menu_item, id=item_id)
     if request.user.is_superuser:

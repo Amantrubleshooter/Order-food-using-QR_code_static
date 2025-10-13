@@ -72,7 +72,7 @@
             <img src="{% static 'logo.png' %}" alt="Logo" width="45" height="50" class="d-inline-block align-text-top me-md-2">
 
             <div class="nav-logo">
-                <a class="navbar-brand" href="/">SnackDonald's</a>
+                <a class="navbar-brand" href="/">Magic</a>
             </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -160,19 +160,33 @@
     {%block js%}{%endblock js%}
     
     <script>
-        // Cart functionality
-        if (localStorage.getItem('cart') == null) {
-            var cart = {};
-        } else {
-            cart = JSON.parse(localStorage.getItem('cart'));
-        }
+// Function to update cart counter
+function updateCartCounter() {
+    let cart = JSON.parse(localStorage.getItem('cart')) || {};
+    let total = 0;
+    
+    for (let item in cart) {
+        total += cart[item][0];
+    }
+    
+    let cartElement = document.getElementById('cart');
+    
+    if (total > 0) {
+        cartElement.innerHTML = total;
+        cartElement.style.display = "inline-block";
+        cartElement.classList.add('highlight');
+    } else {
+        cartElement.style.display = "none";
+        cartElement.classList.remove('highlight');
+    }
+}
 
-        // Calculate total items in cart
-        var total = 0;
-        for (var item in cart) {
-            total = total + cart[item][0];
-        }
-        document.getElementById('cart').innerHTML = total;
+// Call on page load
+updateCartCounter();
+
+// Call this after every cart operation (add/remove/update)
+
+
     </script>
   </body>
 </html>
