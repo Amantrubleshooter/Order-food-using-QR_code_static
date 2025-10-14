@@ -520,7 +520,7 @@ def generate_bill(request):
     shop_address = read_static_file('shop_address.txt')
 
     # Generate QR Code
-    website_url = "http://127.0.0.1:8000/"
+    website_url = "https://order-food-using-qr-code-static.onrender.com/"
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(website_url)
     qr.make(fit=True)
