@@ -11,7 +11,6 @@
     font-size: 14px;
   }
   
-  /* Same compact design as kitchen view */
   .orders-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -25,6 +24,7 @@
     padding: 12px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     font-size: 0.85rem;
+    position: relative;
   }
   
   .order-header {
@@ -117,6 +117,7 @@
   .btn-view { background: #3b82f6; color: white; }
   .btn-paid { background: #10b981; color: white; }
   .btn-complete { background: #059669; color: white; }
+  .btn-bill { background: #8b5cf6; color: white; }
   
   .section-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -143,6 +144,18 @@
     font-size: 2rem;
     margin: 10px 0;
   }
+  
+  .bill-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin: 5px 0;
+  }
+  
+  .bill-cleared { background: #d1fae5; color: #065f46; }
+  .bill-pending { background: #fef3c7; color: #92400e; }
   
   @media (min-width: 768px) {
     .orders-grid {
@@ -187,6 +200,13 @@
         </span>
         {% endif %}
         
+        <!-- Bill Status -->
+        {% if o.bill_clear %}
+        <span class="bill-status bill-cleared">📄 BILL CLEARED</span>
+        {% else %}
+        <span class="bill-status bill-pending">📄 BILL PENDING</span>
+        {% endif %}
+        
         <div class="items-list">
           {% for item_key, item_values in o.items_json.items %}
           <div><b>{{ item_values.1 }}</b> × {{ item_values.0 }}</div>
@@ -216,16 +236,29 @@
           </form>
           {% endif %}
           
+          <!-- Bill Generation Button -->
+          {% if not o.bill_clear %}
+          <button onclick="generateBill('{{ o.table }}', '{{ o.order_id }}', '{{ o.daily_order_number }}')" class="btn-action btn-bill">
+            📄 Generate Bill
+          </button>
+          {% endif %}
+          
           <form method="POST" action="{% url 'update_order_status' o.order_id %}" style="margin: 0;">
             {% csrf_token %}
             <button type="submit" name="status" value="completed" class="btn-action btn-complete">
-              ✅ Complete
+              ✅ Complete Order
             </button>
           </form>
         </div>
         {% else %}
         <div style="background: #d1fae5; padding: 8px; border-radius: 5px; text-align: center; margin-top: 8px; font-size: 0.75rem; color: #065f46; font-weight: 600;">
           🎉 COMPLETED
+          {% if not o.bill_clear %}
+          <br>
+          <button onclick="generateBill('{{ o.table }}', '{{ o.order_id }}', '{{ o.daily_order_number }}')" class="btn-action btn-bill" style="margin-top: 5px;">
+            📄 Generate Bill
+          </button>
+          {% endif %}
         </div>
         {% endif %}
       </div>
@@ -265,6 +298,13 @@
         
         <span class="status-badge status-{{ o.status }}">{{ o.status|upper }}</span>
         
+        <!-- Bill Status for Yesterday -->
+        {% if o.bill_clear %}
+        <span class="bill-status bill-cleared">📄 BILL CLEARED</span>
+        {% else %}
+        <span class="bill-status bill-pending">📄 BILL PENDING</span>
+        {% endif %}
+        
         <div class="items-list">
           {% for item_key, item_values in o.items_json.items %}
           <div><b>{{ item_values.1 }}</b> × {{ item_values.0 }}</div>
@@ -272,6 +312,15 @@
         </div>
         
         <div class="price-tag" style="color: #6b7280;">₹{{ o.price }}</div>
+        
+        <!-- Bill Generation for Yesterday Orders -->
+        {% if not o.bill_clear %}
+        <div class="action-buttons">
+          <button onclick="generateBill('{{ o.table }}', '{{ o.order_id }}', '{{ o.daily_order_number }}')" class="btn-action btn-bill">
+            📄 Generate Bill
+          </button>
+        </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
@@ -287,4 +336,14 @@
   </div>
 
 </div>
+
 {% endblock body %}
+
+{% block js %}
+<script>
+  function generateBill(table, orderId, dailyOrderNumber) {
+    // Generate bill with all details including invoice number
+    window.location.href = `/generate_bill?table=${table}&order_id=${orderId}&invoice_no=${dailyOrderNumber}`;
+  }
+</script>
+{% endblock js %}

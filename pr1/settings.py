@@ -106,7 +106,7 @@
 #     ('0 */48 * * *', 'django.core.management.call_command', ['cleanup_old_data']),
 # ]
 
-#######above is my test local code
+# #######above is my test local code
 
 
 """

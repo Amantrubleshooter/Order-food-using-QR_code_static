@@ -14,6 +14,15 @@ from io import BytesIO
 from django.core.files import File
 from django.utils import timezone
 from itertools import groupby
+import os
+import json
+import qrcode
+from io import BytesIO
+import base64
+from django.conf import settings
+from django.shortcuts import render
+from django.http import HttpResponse
+from datetime import datetime, timedelta
 
 
 User = get_user_model()
@@ -488,15 +497,39 @@ def signup(request):
 
 def generate_bill(request):
     t_number = request.GET.get('table')
-
     order_for_table = order.objects.filter(table=t_number, bill_clear=False)
     total_bill = 0
     now = datetime.now()
-    now_ist = now + timedelta(hours=5, minutes=30)
 
     bill_items = []
     c_name = ''
     c_phone = ''
+    
+    # Get shop details from static files
+    def read_static_file(filename):
+        try:
+            file_path = os.path.join(settings.BASE_DIR, 'static', 'bill_var', filename)
+            with open(file_path, 'r', encoding='utf-8') as file:
+                return file.read().strip()
+        except Exception as e:
+            print(f"Error reading {filename}: {e}")
+            return "Not Available"
+
+    shop_name = read_static_file('shop_name.txt')
+    gst_number = read_static_file('gst_number.txt')
+    shop_address = read_static_file('shop_address.txt')
+
+    # Generate QR Code
+    website_url = "http://127.0.0.1:8000/"
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(website_url)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+    
+    buffered = BytesIO()
+    qr_img.save(buffered, format="PNG")
+    qr_base64 = base64.b64encode(buffered.getvalue()).decode()
+
     for o in order_for_table:
         try:
             total_bill += int(o.price) if o.price else 0
@@ -505,6 +538,7 @@ def generate_bill(request):
             
             bill_items.append({
                 'order_items': o.items_json,
+                'special_instructions': o.special_instructions
             })
         except (ValueError, TypeError) as e:
             print(f"Error processing order {o.order_id}: Invalid price '{o.price}' - {e}")
@@ -520,30 +554,71 @@ def generate_bill(request):
         except Table.DoesNotExist:
             pass
 
+    # Process order items - FIXED VERSION
     order_dict = {}
+    all_items = []
+    
     for item in bill_items:
-        for key, value in item.items():
-            order_items = json.loads(value)
-            for pr_key, pr_value in order_items.items():
-                order_dict[pr_value[1].lower()] = [
-                    pr_value[0], (pr_value[2] * pr_value[0])
-                ]
-    new_bill = bill(order_items=order_dict,
-                    name=c_name,
-                    bill_total=total_bill,
-                    phone=c_phone,
-                    bill_time=now_ist)
-    new_bill.save()
+        order_data = item['order_items']
+        
+        if isinstance(order_data, str):
+            try:
+                order_data = json.loads(order_data)
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                continue
+        
+        if isinstance(order_data, dict):
+            for pr_key, pr_value in order_data.items():
+                try:
+                    # Use original item name (don't convert to lowercase to avoid grouping different items)
+                    item_name = str(pr_value[1])
+                    quantity = int(pr_value[0])
+                    price_per_item = float(pr_value[2])
+                    total_price = quantity * price_per_item
+                    
+                    # Don't group items - show each item separately
+                    order_dict[f"{item_name}_{pr_key}"] = [quantity, total_price, price_per_item]
+                    
+                    all_items.append({
+                        'name': item_name,
+                        'quantity': quantity,
+                        'price_per_item': price_per_item,
+                        'total_price': total_price
+                    })
+                    
+                except (IndexError, ValueError, TypeError) as e:
+                    print(f"Error processing item {pr_key}: {e}")
+                    continue
 
-    context = {}
+    # Save to bill model
+    new_bill = bill(
+        order_items=json.dumps(order_dict),
+        name=c_name,
+        bill_total=total_bill,
+        phone=c_phone,
+        bill_time=now
+    )
+    new_bill.save()
 
     context = {
         'order_dict': order_dict,
+        'all_items': all_items,
         'bill_total': total_bill,
         'name': c_name,
         'phone': c_phone,
         'inv_id': new_bill.id,
+        'table_number': t_number,
+        'current_date': now.strftime('%d-%m-%Y'),
+        'current_time': now.strftime('%I:%M %p'),
+        'shop_name': shop_name,
+        'gst_number': gst_number,
+        'shop_address': shop_address,
+        'qr_code': qr_base64,
+        'website_url': website_url,
+        'bill_items': bill_items,
     }
+
     return render(request, 'generate_bill.html', context)
 
 

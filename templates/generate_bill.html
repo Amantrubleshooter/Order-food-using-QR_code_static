@@ -1,58 +1,223 @@
-{% extends 'base.html' %}
-
-
-{% block title %}Bill{% endblock title %}
-
-{%block body%}
-
-{% for message in messages %}
-    <div class="alert alert-success alert-dismissable fade show" role="alert">
-        <strong>{{message}}</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Bill - {{ shop_name }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            font-size: 14px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px double #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .shop-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c5530;
+            margin: 10px 0;
+            text-transform: uppercase;
+        }
+        .shop-address {
+            font-size: 12px;
+            color: #666;
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+        .gst-number {
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            margin: 5px 0;
+        }
+        .bill-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            align-items: flex-start;
+        }
+        .bill-details {
+            flex: 2;
+        }
+        .qr-code {
+            flex: 1;
+            text-align: center;
+        }
+        .qr-code img {
+            width: 80px;
+            height: 80px;
+        }
+        .invoice-header {
+            background: #2c5530;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 12px;
+        }
+        .order-table th {
+            background: #e9ecef;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+            font-weight: bold;
+        }
+        .order-table td {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .total-section {
+            text-align: right;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #2c5530;
+        }
+        .grand-total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c5530;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px dashed #ccc;
+            color: #666;
+            font-size: 11px;
+        }
+        .thank-you {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c5530;
+            margin: 10px 0;
+        }
+        .customer-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .special-instruction {
+            background: #fff3cd;
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid #ffc107;
+            font-size: 11px;
+            border-radius: 3px;
+        }
+        @media print {
+            body { margin: 0; padding: 10px; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="shop-name">{{ shop_name }}</div>
+        <div class="shop-address">{{ shop_address|linebreaksbr }}</div>
+        <div class="gst-number">{{ gst_number }}</div>
     </div>
-{% endfor %}
 
-<div class="container col-md-6">
-    <div style="display:grid;place-content:center; padding-top:50px">
-        <h3>Bill No : {{inv_id}} </h3>
-{% if name != "Unknown" %}
-    <h5>Name: {{ name }}</h5>
-    <h5>Phone: {{ phone }}</h5>
-{% endif %}
-      </div>
-        <table class="table table-bordered border-dark">
-            <thead>
-              <tr>
-                <th>Item name</th>
+    <div class="bill-info">
+        <div class="bill-details">
+            <p><strong>Invoice No:</strong> INV-{{ inv_id }}</p>
+            <p><strong>Date:</strong> {{ current_date }}</p>
+            <p><strong>Time:</strong> {{ current_time }}</p>
+            <p><strong>Table:</strong> {% if table_number == 'take away' %}Take Away{% else %}Table {{ table_number }}{% endif %}</p>
+        </div>
+        <div class="qr-code">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code">
+            <p style="font-size: 9px; margin-top: 5px;">Scan to visit us</p>
+        </div>
+    </div>
+
+    {% if name or phone %}
+    <div class="customer-info">
+        {% if name %}<p><strong>Customer:</strong> {{ name }}</p>{% endif %}
+        {% if phone %}<p><strong>Phone:</strong> {{ phone }}</p>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="invoice-header">
+        ORDER DETAILS
+    </div>
+
+    {% if order_dict %}
+    <table class="order-table">
+        <thead>
+            <tr>
+                <th>Item Name</th>
                 <th>Qty</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-                {% for key, value in order_dict.items %}
-                <tr>
-                    <td>{{ key }}</td>
-                    <td>{{ value.0 }}</td>
-                    <td>{{ value.1 }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    <h3 style="display:grid ;place-items:end" >Bill Total: {{ bill_total }}</h3>
-  <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-    <button onclick="printBill()" class="btn btn-primary">Print Bill</button>
-  </div>
-</div>
+                <th>Price</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_key, item_data in order_dict.items %}
+            <tr>
+                <td>{{ item_data.3 }}</td>
+                <td>{{ item_data.0 }}</td>
+                <td>₹{{ item_data.2|floatformat:2 }}</td>
+                <td>₹{{ item_data.1|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 20px; background: #ffebee; border-radius: 5px;">
+        <strong>No items found in the order!</strong>
+    </div>
+    {% endif %}
 
+    <!-- Special Instructions -->
+    {% for bill_item in bill_items %}
+        {% if bill_item.special_instructions %}
+        <div class="special-instruction">
+            <strong>Note:</strong> {{ bill_item.special_instructions }}
+        </div>
+        {% endif %}
+    {% endfor %}
 
-{%endblock body%}
+    <div class="total-section">
+        <div class="grand-total">Grand Total: ₹{{ bill_total }}</div>
+        {% if gst_number != "Not Available" %}
+        <p style="margin: 5px 0; color: #666; font-size: 11px;">(Inclusive of all taxes)</p>
+        {% endif %}
+    </div>
 
-{% block js %}
-<script>
-    function printBill() {
-        window.print();
-    }
-</script>
+    <div class="footer">
+        <div class="thank-you">Thank You For Your Visit!</div>
+        <p>We hope to see you again soon</p>
+        <p>Visit: {{ website_url }}</p>
+        <p>** This is a computer generated bill **</p>
+        <p>Invoice ID: INV-{{ inv_id }}</p>
+    </div>
 
-
-{%endblock js%}
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="background: #2c5530; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            🖨️ Print Bill
+        </button>
+    </div>
+</body>
+</html>
