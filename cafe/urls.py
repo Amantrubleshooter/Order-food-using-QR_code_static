@@ -26,6 +26,9 @@ urlpatterns = [
     path('table_orders/', views.admin_orders, name='admin_orders'),
     path('update_order/<int:order_id>/', views.update_order_status, name='update_order_status'),
     path('table_management/', views.table_management, name='table_management'),
+    path('place-order/', views.admin_place_order, name='admin_place_order'),
+    path('select-items/', views.admin_select_items, name='admin_select_items'),
+    path('edit-order/<int:order_id>/', views.admin_edit_order, name='admin_edit_order'),
     
     # ==================== NEW: RATING URLS ====================
     path('order_confirmation/<int:order_id>/', views.order_confirmation, name='order_confirmation'),

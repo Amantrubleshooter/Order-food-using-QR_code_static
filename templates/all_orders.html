@@ -1,349 +1,330 @@
-{% extends 'base.html' %}
-
-{% block title %}Owner Dashboard
-{% endblock title %}
-
-{% block body %}
-
-<style>
-  body {
-    background: #f5f5f5;
-    font-size: 14px;
-  }
-  
-  .orders-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 10px;
-  }
-  
-  .order-card-compact {
-    background: white;
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    font-size: 0.85rem;
-    position: relative;
-  }
-  
-  .order-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 2px solid #e5e7eb;
-  }
-  
-  .order-id {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #1f2937;
-  }
-  
-  .order-time {
-    font-size: 0.75rem;
-    color: #6b7280;
-  }
-  
-  .status-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin: 5px 0;
-  }
-  
-  .status-pending { background: #fef3c7; color: #92400e; }
-  .status-preparing { background: #dbeafe; color: #1e40af; }
-  .status-ready { background: #d1fae5; color: #065f46; }
-  .status-completed { background: #e5e7eb; color: #374151; }
-  
-  .payment-badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin: 5px 0;
-  }
-  
-  .payment-paid { background: #d1fae5; color: #065f46; }
-  .payment-unpaid { background: #fee2e2; color: #991b1b; }
-  .payment-pending { background: #fef3c7; color: #92400e; }
-  
-  .special-note {
-    background: #fff3cd;
-    border-left: 3px solid #ffc107;
-    padding: 6px;
-    margin: 6px 0;
-    font-size: 0.75rem;
-    border-radius: 3px;
-  }
-  
-  .items-list {
-    background: #f9fafb;
-    padding: 6px;
-    border-radius: 5px;
-    margin: 6px 0;
-    font-size: 0.75rem;
-  }
-  
-  .price-tag {
-    color: #10b981;
-    font-weight: 700;
-    font-size: 1.1rem;
-    text-align: right;
-  }
-  
-  .action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 8px;
-  }
-  
-  .btn-action {
-    width: 100%;
-    padding: 8px;
-    border: none;
-    border-radius: 5px;
-    font-weight: 600;
-    font-size: 0.75rem;
-    cursor: pointer;
-  }
-  
-  .btn-view { background: #3b82f6; color: white; }
-  .btn-paid { background: #10b981; color: white; }
-  .btn-complete { background: #059669; color: white; }
-  .btn-bill { background: #8b5cf6; color: white; }
-  
-  .section-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px;
-    border-radius: 8px;
-    margin: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .earnings-box {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin: 10px;
-    text-align: center;
-  }
-  
-  .earnings-box h2 {
-    font-size: 2rem;
-    margin: 10px 0;
-  }
-  
-  .bill-status {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin: 5px 0;
-  }
-  
-  .bill-cleared { background: #d1fae5; color: #065f46; }
-  .bill-pending { background: #fef3c7; color: #92400e; }
-  
-  @media (min-width: 768px) {
-    .orders-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-</style>
-
-<div class="container-fluid">
-  
-<!-- TODAY'S SECTION -->
-  <div class="section-header">
-    <span>📅 Today - {{ today_date|date:"d M Y" }}</span>
-    <span>{{ today_count }} orders</span>
-  </div>
-
-  {% if today_orders %}
-    <div class="orders-grid">
-      {% for o in today_orders %}
-      <div class="order-card-compact">
-        <div class="order-header">
-          <span class="order-id">#{{ o.daily_order_number }}</span>
-          <span class="order-time">{{ o.ist_time|date:"g:i A" }}</span>
-        </div>
-        
-        <!-- Table/Take Away label INSIDE card -->
-        <div style="background: #17a2b8; color: white; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: 600; margin-bottom: 8px; display: inline-block;">
-          {% if o.table == 'take away' %}🚶 Take Away{% else %}🍽 Table {{ o.table }}{% endif %}
-        </div>
-        
-        <span class="status-badge status-{{ o.status }}">
-          {% if o.status == 'pending' %}⏳ PENDING
-          {% elif o.status == 'preparing' %}👨‍🍳 PREPARING
-          {% elif o.status == 'ready' %}✅ READY
-          {% elif o.status == 'completed' %}🎉 COMPLETED
-          {% endif %}
-        </span>
-        
-        {% if o.payment_status %}
-        <span class="payment-badge payment-{{ o.payment_status }}">
-          {% if o.payment_status == 'paid' %}✅ PAID{% else %}❌ UNPAID{% endif %}
-        </span>
-        {% endif %}
-        
-        <!-- Bill Status -->
-        {% if o.bill_clear %}
-        <span class="bill-status bill-cleared">📄 BILL CLEARED</span>
-        {% else %}
-        <span class="bill-status bill-pending">📄 BILL PENDING</span>
-        {% endif %}
-        
-        <div class="items-list">
-          {% for item_key, item_values in o.items_json.items %}
-          <div><b>{{ item_values.1 }}</b> × {{ item_values.0 }}</div>
-          {% endfor %}
-        </div>
-        
-        {% if o.special_instructions %}
-        <div class="special-note">
-          <b>📝:</b> {{ o.special_instructions }}
-        </div>
-        {% endif %}
-        
-        <div class="price-tag">₹{{ o.price }}</div>
-        
-        {% if o.status != 'completed' %}
-        <div class="action-buttons">
-          {% if o.payment_screenshot %}
-          <a href="{{ o.payment_screenshot.url }}" target="_blank" class="btn-action btn-view" style="text-decoration: none; text-align: center;">
-            📸 View Payment
-          </a>
-          {% endif %}
-          
-          {% if o.payment_status == 'unpaid' and o.payment_screenshot %}
-          <form method="POST" action="{% url 'mark_paid' o.order_id %}" style="margin: 0;">
-            {% csrf_token %}
-            <button type="submit" class="btn-action btn-paid">✅ Mark Paid</button>
-          </form>
-          {% endif %}
-          
-          <!-- Bill Generation Button -->
-          {% if not o.bill_clear %}
-          <button onclick="generateBill('{{ o.table }}', '{{ o.order_id }}', '{{ o.daily_order_number }}')" class="btn-action btn-bill">
-            📄 Generate Bill
-          </button>
-          {% endif %}
-          
-          <form method="POST" action="{% url 'update_order_status' o.order_id %}" style="margin: 0;">
-            {% csrf_token %}
-            <button type="submit" name="status" value="completed" class="btn-action btn-complete">
-              ✅ Complete Order
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Orders - Magic Momo's</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .order-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fff;
+            transition: all 0.3s;
+        }
+        .order-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .order-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .today-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .yesterday-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+    </style>
+</head>
+<body style="background-color: #f8f9fa;">
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #dc3545;">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'menu' %}">
+                🍕 Magic Momo's
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
             </button>
-          </form>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'menu' %}">Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'all_orders' %}">All Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin_orders' %}">Kitchen Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_menu' %}">Edit Menu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'table_management' %}">Tables</a>
+                    </li>
+                    
+                    <!-- STEP 5: NEW ORDER BUTTON IN NAVBAR -->
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-success text-white ms-2 px-3" href="{% url 'admin_place_order' %}">
+                            ➕ New Order
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profile' %}">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </nav>
+
+    <div class="container my-5">
+        
+        <!-- Page Header with Quick Actions -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-4 fw-bold text-dark">📊 All Orders</h1>
+                <p class="text-muted">Owner Dashboard - View and manage all orders</p>
+            </div>
+            <div>
+                <!-- STEP 5: ADDITIONAL PLACE ORDER BUTTON -->
+                <a href="{% url 'admin_place_order' %}" class="btn btn-success btn-lg">
+                    ➕ Place New Order
+                </a>
+            </div>
+        </div>
+
+        <!-- TODAY'S ORDERS SECTION -->
+        <div class="section-header today-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">📅 Today's Orders</h2>
+                    <p class="mb-0 opacity-75">{{ today_date|date:"l, d F Y" }}</p>
+                </div>
+                <div class="text-end">
+                    <h3 class="mb-0">{{ today_count }} Orders</h3>
+                    <h4 class="mb-0">₹{{ today_earnings|floatformat:0 }}</h4>
+                </div>
+            </div>
+        </div>
+
+        {% if today_orders %}
+            {% for order in today_orders %}
+            <div class="order-card">
+                <div class="row align-items-center">
+                    
+                    <!-- Order Number -->
+                    <div class="col-md-1 text-center">
+                        <div class="order-number">#{{ order.daily_order_number }}</div>
+                    </div>
+                    
+                    <!-- Order Details -->
+                    <div class="col-md-6">
+                        <h5 class="mb-2 fw-bold">{{ order.name }}</h5>
+                        <p class="mb-1 text-muted">
+                            📞 {{ order.phone }}
+                        </p>
+                        
+                        <!-- Items List -->
+                        <div class="mb-2">
+                            <strong>Items:</strong>
+                            <ul class="list-unstyled mb-0">
+                                {% for key, item in order.items_json.items %}
+                                <li class="text-muted">
+                                    • {{ item.1 }} <span class="badge bg-secondary">x{{ item.0 }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        <!-- Special Instructions -->
+                        {% if order.special_instructions %}
+                        <div class="alert alert-warning py-1 mb-2">
+                            <small><strong>📝 Note:</strong> {{ order.special_instructions }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Table & Status Badges -->
+                        <div>
+                            {% if order.table == 'take away' %}
+                                <span class="badge bg-info">🥡 Takeaway</span>
+                            {% else %}
+                                <span class="badge bg-secondary">🪑 Table {{ order.table }}</span>
+                            {% endif %}
+                            
+                            <span class="badge 
+                                {% if order.status == 'completed' %}bg-success
+                                {% elif order.status == 'ready' %}bg-primary
+                                {% elif order.status == 'preparing' %}bg-warning text-dark
+                                {% else %}bg-secondary{% endif %}">
+                                {{ order.status|title }}
+                            </span>
+                            
+                            <span class="badge 
+                                {% if order.payment_status == 'paid' %}bg-success
+                                {% else %}bg-danger{% endif %}">
+                                {{ order.payment_status|title }}
+                            </span>
+                        </div>
+                        
+                        <small class="text-muted d-block mt-1">
+                            🕐 {{ order.ist_time|date:"h:i A" }}
+                        </small>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="col-md-2 text-center">
+                        <h3 class="text-success mb-0">₹{{ order.price }}</h3>
+                    </div>
+                    
+                    <!-- STEP 4: ACTION BUTTONS (THIS IS THE MAIN ADDITION!) -->
+                    <div class="col-md-3">
+                        <div class="d-grid gap-2">
+                            
+                            <!-- EDIT ORDER BUTTON - This is Step 4! -->
+                            <a href="{% url 'admin_edit_order' order.order_id %}" 
+                               class="btn btn-warning btn-sm">
+                                ✏️ Edit Order
+                            </a>
+                            
+                            <!-- Payment Status Button -->
+                            {% if order.payment_status == 'unpaid' %}
+                            <a href="{% url 'mark_paid' order.order_id %}" 
+                               class="btn btn-success btn-sm"
+                               onclick="return confirm('Mark this order as PAID?')">
+                                ✅ Mark as Paid
+                            </a>
+                            {% else %}
+                            <button class="btn btn-outline-success btn-sm" disabled>
+                                ✓ Already Paid
+                            </button>
+                            {% endif %}
+                            
+                            <!-- View Bill Button -->
+                            <a href="{% url 'generate_bill' %}?table={{ order.table }}" 
+                               class="btn btn-info btn-sm text-white">
+                                📄 Generate Bill
+                            </a>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            {% endfor %}
         {% else %}
-        <div style="background: #d1fae5; padding: 8px; border-radius: 5px; text-align: center; margin-top: 8px; font-size: 0.75rem; color: #065f46; font-weight: 600;">
-          🎉 COMPLETED
-          {% if not o.bill_clear %}
-          <br>
-          <button onclick="generateBill('{{ o.table }}', '{{ o.order_id }}', '{{ o.daily_order_number }}')" class="btn-action btn-bill" style="margin-top: 5px;">
-            📄 Generate Bill
-          </button>
-          {% endif %}
-        </div>
+            <div class="alert alert-info text-center">
+                <h5>No orders today yet!</h5>
+                <p class="mb-0">Start taking orders by clicking "Place New Order" button above.</p>
+            </div>
         {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="alert alert-info m-3" style="font-size: 0.9rem;">No orders today yet.</div>
-  {% endif %}
 
-  <!-- TODAY'S EARNINGS -->
-  <div class="earnings-box">
-    <h3>💰 Today's Earnings</h3>
-    <h2>₹{{ today_earnings }}</h2>
-    <p style="font-size: 0.9rem; opacity: 0.9;">From {{ today_count }} orders</p>
-  </div>
-
-  <hr style="margin: 30px 10px; border-top: 3px solid #ddd;">
-
-<!-- YESTERDAY'S SECTION -->
-  <div class="section-header" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
-    <span>📅 Yesterday - {{ yesterday_date|date:"d M Y" }}</span>
-    <span>{{ yesterday_count }} orders</span>
-  </div>
-
-  {% if yesterday_orders %}
-    <div class="orders-grid">
-      {% for o in yesterday_orders %}
-      <div class="order-card-compact" style="opacity: 0.8;">
-        <div class="order-header">
-          <span class="order-id">#{{ o.daily_order_number }}</span>
-          <span class="order-time">{{ o.ist_time|date:"g:i A" }}</span>
+        <!-- YESTERDAY'S ORDERS SECTION -->
+        <div class="section-header yesterday-header mt-5">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">📅 Yesterday's Orders</h2>
+                    <p class="mb-0 opacity-75">{{ yesterday_date|date:"l, d F Y" }}</p>
+                </div>
+                <div class="text-end">
+                    <h3 class="mb-0">{{ yesterday_count }} Orders</h3>
+                    <h4 class="mb-0">₹{{ yesterday_earnings|floatformat:0 }}</h4>
+                </div>
+            </div>
         </div>
-        
-        <div style="background: #6c757d; color: white; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: 600; margin-bottom: 8px; display: inline-block;">
-          {% if o.table == 'take away' %}🚶 Take Away{% else %}🍽 Table {{ o.table }}{% endif %}
-        </div>
-        
-        <span class="status-badge status-{{ o.status }}">{{ o.status|upper }}</span>
-        
-        <!-- Bill Status for Yesterday -->
-        {% if o.bill_clear %}
-        <span class="bill-status bill-cleared">📄 BILL CLEARED</span>
+
+        {% if yesterday_orders %}
+            {% for order in yesterday_orders %}
+            <div class="order-card">
+                <div class="row align-items-center">
+                    
+                    <div class="col-md-1 text-center">
+                        <div class="order-number text-secondary">#{{ order.daily_order_number }}</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="mb-2 fw-bold">{{ order.name }}</h5>
+                        <p class="mb-1 text-muted">📞 {{ order.phone }}</p>
+                        
+                        <div class="mb-2">
+                            <strong>Items:</strong>
+                            <ul class="list-unstyled mb-0">
+                                {% for key, item in order.items_json.items %}
+                                <li class="text-muted">
+                                    • {{ item.1 }} <span class="badge bg-secondary">x{{ item.0 }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        {% if order.special_instructions %}
+                        <div class="alert alert-warning py-1 mb-2">
+                            <small><strong>📝 Note:</strong> {{ order.special_instructions }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        <div>
+                            {% if order.table == 'take away' %}
+                                <span class="badge bg-info">🥡 Takeaway</span>
+                            {% else %}
+                                <span class="badge bg-secondary">🪑 Table {{ order.table }}</span>
+                            {% endif %}
+                            
+                            <span class="badge bg-success">{{ order.status|title }}</span>
+                            <span class="badge 
+                                {% if order.payment_status == 'paid' %}bg-success
+                                {% else %}bg-danger{% endif %}">
+                                {{ order.payment_status|title }}
+                            </span>
+                        </div>
+                        
+                        <small class="text-muted d-block mt-1">
+                            🕐 {{ order.ist_time|date:"h:i A" }}
+                        </small>
+                    </div>
+                    
+                    <div class="col-md-2 text-center">
+                        <h3 class="text-success mb-0">₹{{ order.price }}</h3>
+                    </div>
+                    
+                    <!-- STEP 4: ACTION BUTTONS FOR YESTERDAY'S ORDERS TOO -->
+                    <div class="col-md-3">
+                        <div class="d-grid gap-2">
+                            
+                            <!-- EDIT BUTTON -->
+                            <a href="{% url 'admin_edit_order' order.order_id %}" 
+                               class="btn btn-warning btn-sm">
+                                ✏️ Edit Order
+                            </a>
+                            
+                            {% if order.payment_status == 'unpaid' %}
+                            <a href="{% url 'mark_paid' order.order_id %}" 
+                               class="btn btn-success btn-sm"
+                               onclick="return confirm('Mark this order as PAID?')">
+                                ✅ Mark as Paid
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+            {% endfor %}
         {% else %}
-        <span class="bill-status bill-pending">📄 BILL PENDING</span>
+            <div class="alert alert-secondary text-center">
+                <p class="mb-0">No orders yesterday.</p>
+            </div>
         {% endif %}
-        
-        <div class="items-list">
-          {% for item_key, item_values in o.items_json.items %}
-          <div><b>{{ item_values.1 }}</b> × {{ item_values.0 }}</div>
-          {% endfor %}
-        </div>
-        
-        <div class="price-tag" style="color: #6b7280;">₹{{ o.price }}</div>
-        
-        <!-- Bill Generation for Yesterday Orders -->
-        {% if not o.bill_clear %}
-        <div class="action-buttons">
-          <button onclick="generateBill('{{ o.table }}', '{{ o.order_id }}', '{{ o.daily_order_number }}')" class="btn-action btn-bill">
-            📄 Generate Bill
-          </button>
-        </div>
-        {% endif %}
-      </div>
-      {% endfor %}
+
     </div>
-  {% else %}
-    <div class="alert alert-info m-3" style="font-size: 0.9rem;">No orders yesterday.</div>
-  {% endif %}
 
-  <!-- YESTERDAY'S EARNINGS -->
-  <div class="earnings-box" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">
-    <h3>💰 Yesterday's Earnings</h3>
-    <h2>₹{{ yesterday_earnings }}</h2>
-    <p style="font-size: 0.9rem; opacity: 0.9;">From {{ yesterday_count }} orders</p>
-  </div>
-
-</div>
-
-{% endblock body %}
-
-{% block js %}
-<script>
-  function generateBill(table, orderId, dailyOrderNumber) {
-    // Generate bill with all details including invoice number
-    window.location.href = `/generate_bill?table=${table}&order_id=${orderId}&invoice_no=${dailyOrderNumber}`;
-  }
-</script>
-{% endblock js %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
