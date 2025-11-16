@@ -63,14 +63,25 @@
 # WSGI_APPLICATION = 'pr1.wsgi.application'
 
 # # Database - LOCAL PostgreSQL
+# # DATABASES = {
+# #     'default': {
+# #         'ENGINE': 'django.db.backends.postgresql',
+# #         'NAME': 'Aman',              # Local database name
+# #         'USER': 'postgres',          # Local DB username
+# #         'PASSWORD': '123',           # Local DB password
+# #         'HOST': 'localhost',         # Local host
+# #         'PORT': '5432',              # PostgreSQL port
+# #     }
+# # }
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'Aman',              # Local database name
-#         'USER': 'postgres',          # Local DB username
-#         'PASSWORD': '123',           # Local DB password
-#         'HOST': 'localhost',         # Local host
-#         'PORT': '5432',              # PostgreSQL port
+#         'ENGINE': 'djongo',
+#         'NAME': 'AmanCafeDB',      # Your MongoDB database name
+#         'CLIENT': {
+#             'host': 'mongodb+srv://amanshivhare5657_db_user:l943OjJAfo4dUsYl@cluster0.icwhstl.mongodb.net/Food_qr_static',
+#             # If MongoDB has username/password -> use:
+#             # 'host': 'mongodb://<user>:<password>@localhost:27017/?authSource=admin'
+#         }
 #     }
 # }
 
@@ -106,30 +117,20 @@
 #     ('0 */48 * * *', 'django.core.management.call_command', ['cleanup_old_data']),
 # ]
 
-# #######above is my test local code
-
+#above is my code for local setting.py
 
 """
-PRODUCTION Settings for Render - pr1_db database
-Matches local configuration with USE_TZ = True
+PRODUCTION Settings for Render using MongoDB (Djongo)
 """
+
 import os
 from pathlib import Path
-import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^#ku(-=1nwd8wnfe&1eri+k)_(8g@!n*#p3&!i4=!!c)&rhl3v')
-
-# SECURITY WARNING: don't run with debug turned on in production!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'unsafe-secret-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
-# Better approach for ALLOWED_HOSTS
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -145,7 +146,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Add this for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -174,18 +175,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pr1.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+# ------------------------------------------
+# 🔥 MONGODB CONFIG FOR RENDER (Djongo)
+# ------------------------------------------
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql://postgres:123@localhost:5432/Aman',
-        conn_max_age=600
-    )
+    'default': {
+        'ENGINE': 'djongo',
+        'NAME': 'Food_qr_static',   # Database name inside MongoDB
+        'CLIENT': {
+            'host': 'mongodb+srv://amanshivhare5657_db_user:l943OjJAfo4dUsYl@cluster0.icwhstl.mongodb.net/Food_qr_static?retryWrites=true&w=majority'
+        }
+    }
 }
 
-# Password validation
-# https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
+# ------------------------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -194,45 +198,27 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/4.1/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'Asia/Kolkata'
-
 USE_I18N = True
-
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.1/howto/static-files/
-
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# WhiteNoise configuration for static files
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Custom user model
 AUTH_USER_MODEL = 'cafe.User'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Cron jobs
 CRONJOBS = [
     ('0 */48 * * *', 'django.core.management.call_command', ['cleanup_old_data']),
 ]
 
-# Security settings for production
+# Security settings for Render
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True

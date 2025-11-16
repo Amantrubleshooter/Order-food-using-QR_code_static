@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="E:\GIt_aman\Order-food-using-QR_code\.vnb"
+VIRTUAL_ENV="E:\Git_Aman_2\Order-food-using-QR_code_static\.vnb"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

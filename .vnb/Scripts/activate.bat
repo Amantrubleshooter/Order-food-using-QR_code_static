@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=E:\GIt_aman\Order-food-using-QR_code\.vnb
+set VIRTUAL_ENV=E:\Git_Aman_2\Order-food-using-QR_code_static\.vnb
 
 if not defined PROMPT set PROMPT=$P$G
 
