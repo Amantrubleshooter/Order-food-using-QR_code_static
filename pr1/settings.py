@@ -182,7 +182,7 @@ WSGI_APPLICATION = 'pr1.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'Food_qr_static',   # Database name inside MongoDB
+        'NAME': 'AmanCafeDB',   # Database name inside MongoDB
         'CLIENT': {
             'host': 'mongodb+srv://amanshivhare5657_db_user:l943OjJAfo4dUsYl@cluster0.icwhstl.mongodb.net/Food_qr_static?retryWrites=true&w=majority'
         }
