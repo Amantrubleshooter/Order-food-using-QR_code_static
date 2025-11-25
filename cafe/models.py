@@ -16,9 +16,12 @@ class User(AbstractUser):
     USERNAME_FIELD = 'phone'
     REQUIRED_FIELDS = []
 
+    class Meta:
+        db_table = 'cafe_user'
+
 
 class menu_item(models.Model):
-    item_id = models.AutoField
+    # Remove item_id = models.AutoField - MongoDB uses _id automatically
     name = models.CharField(max_length=50)
     category = models.CharField(max_length=50, default='')
     desc = models.CharField(max_length=250)
@@ -47,12 +50,13 @@ class rating(models.Model):
     r_date = models.DateField()
 
     def __str__(self):
-        return f"{self.name}\'s review"
+        return f"{self.name}'s review"
 
 
 class order(models.Model):
+    # MongoDB will use _id, but we can keep order_id for compatibility
     order_id = models.AutoField(primary_key=True)
-    items_json = models.CharField(max_length=5000)
+    items_json = models.TextField()  # Changed from CharField for larger data
     name = models.CharField(max_length=30, default='')
     phone = models.CharField(max_length=10, default='')
     table = models.CharField(max_length=15, default='take away')
@@ -60,17 +64,16 @@ class order(models.Model):
     order_time = models.DateTimeField()
     bill_clear = models.BooleanField(default=False)
     
-    # NEW: Special instructions field
     special_instructions = models.TextField(blank=True, default='')
     
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),
         ('preparing', 'Preparing'),
         ('ready', 'Ready'),
-        ('completed', 'Completed')
+        ('completed', 'Completed'),
+        ('confirmed', 'Confirmed')  # Added for admin orders
     ], default='pending')
     
-        # ADD THESE 2 NEW LINES:
     payment_status = models.CharField(max_length=20, choices=[
         ('unpaid', 'Unpaid'),
         ('paid', 'Paid')
@@ -82,7 +85,7 @@ class order(models.Model):
 
 
 class bill(models.Model):
-    order_items = models.CharField(max_length=5000)
+    order_items = models.TextField()  # Changed from CharField
     name = models.CharField(default='', max_length=50)
     bill_total = models.IntegerField()
     phone = models.CharField(max_length=10)
@@ -98,7 +101,6 @@ class Table(models.Model):
         return f"Table {self.table_number}"
 
 
-# NEW: Rating model for menu items
 class ItemRating(models.Model):
     menu_item = models.ForeignKey(menu_item, on_delete=models.CASCADE, related_name='ratings')
     order = models.ForeignKey(order, on_delete=models.CASCADE, null=True, blank=True)
