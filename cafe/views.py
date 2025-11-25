@@ -25,7 +25,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from datetime import datetime, timedelta
 
-
+import logging
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 # ==================== CORE VIEWS ===================
